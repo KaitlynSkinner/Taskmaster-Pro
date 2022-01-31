@@ -46,6 +46,77 @@ var saveTasks = function() {
 };
 
 // New code I have added begins 
+// Drag and sort tasks(list-group elements) function
+$(".card .list-group").sortable({
+  // Enable dragging accross lists
+  connectWith: $(".card .list-group"),
+  scroll: false,
+  tolerance: "pointer",
+  helper: "clone",
+  activate: function(event, ui) {
+    console.log("activate", ui);
+  },
+  deactivate: function(event, ui) {
+    console.log("deactivate", ui);
+  },
+  over: function(event) {
+    console.log("over", event);
+  },
+  out: function(event) {
+    console.log("out", event);
+  },
+  update: function(event) {
+    // array to store the task data in
+    var tempArr = [];
+
+    // loop over current set of children in sortable list
+    $(this).children().each(function() {
+      // Save values in temp array
+      // add task data to the temp array as an object
+      tempArr.push({
+        text: $(this)
+          .find("p")
+          .text()
+          .trim(),
+
+        date: $(this)
+          .find("span")
+          .text()
+          .trim()
+        });
+    });
+    //console.log(tempArr);
+
+    // trim down list's ID to match object property
+    var arrName = $(this)
+      .attr("id")
+      .replace("list-", "");
+
+    // update array on tasks object and save
+    tasks[arrName] = tempArr;
+    saveTasks();
+  },
+  stop: function(event) {
+    $(this).removeClass("dropover");
+  }
+});
+
+// Trash icon can be dragged/dropped onto
+$("#trash").droppable({
+  accept: ".card .list-group-item",
+  tolerance: "touch",
+  drop: function(event, ui) {
+    // Remove dragged element from the dom
+    ui.draggable.remove();
+  },
+  over: function(event, ui) {
+    console.log("over", ui);
+  },
+  out: function(event, ui) {
+    console.log("out", ui);
+  }
+});
+
 $(".list-group").on("click", "p", function() {
   //console.log(this);
 
