@@ -13,6 +13,10 @@ var createTask = function(taskText, taskDate, taskList) {
   // append span and p element to parent li
   taskLi.append(taskSpan, taskP);
 
+  //New code I have added begins
+  // Check due date
+  auditTask(taskLi);
+  // New code I have added ends
 
   // append to ul list on the page
   $("#list-" + taskList).append(taskLi);
@@ -46,6 +50,34 @@ var saveTasks = function() {
 };
 
 // New code I have added begins 
+var auditTask = function(taskEl) {
+  // To ensure element is getting to the function
+  //console.log(taskEl);
+
+  // Get date from task element
+  var date = $(taskEl)
+    .find("span")
+    .text()
+    .trim();
+    // Ensure it worked
+    //console.log(date);
+
+    // Convert to moment object at 5:00pm
+    var time = moment(date, "L").set("hour", 17);
+    // This should print out an object for the value of the date variable, but at 5:00pm of that date
+    //console.log(time);
+
+    // Apply new class if task is near/over due date
+    if (moment().isAfter(time)) {
+      $(taskEl).addClass("list-group-item-danger");
+    // We use moment() to get right now and use .diff() afterwards to test for a number less than +2, not a number greater than -2.
+    // To do this, we've wrapped the returning value of the moment.diff() in the JavaScript Math object's .abs() method. 
+    // This ensures we're getting the absolute value of that number.
+    } else if (Math.abs(moment().diff(time, "days")) <= 2) {
+      $(taskEl).addClass("list-group-item-warning");
+    }
+};
+
 // Drag and sort tasks(list-group elements) function
 $(".card .list-group").sortable({
   // Enable dragging accross lists
@@ -66,13 +98,13 @@ $(".card .list-group").sortable({
     console.log("out", event);
   },
   update: function(event) {
-    // array to store the task data in
+    // Array to store the task data in
     var tempArr = [];
 
-    // loop over current set of children in sortable list
+    // Loop over current set of children in sortable list
     $(this).children().each(function() {
       // Save values in temp array
-      // add task data to the temp array as an object
+      // Add task data to the temp array as an object
       tempArr.push({
         text: $(this)
           .find("p")
@@ -87,12 +119,12 @@ $(".card .list-group").sortable({
     });
     //console.log(tempArr);
 
-    // trim down list's ID to match object property
+    // Trim down list's ID to match object property
     var arrName = $(this)
       .attr("id")
       .replace("list-", "");
 
-    // update array on tasks object and save
+    // Update array on tasks object and save
     tasks[arrName] = tempArr;
     saveTasks();
   },
@@ -167,12 +199,21 @@ $(".list-group").on("click", "span", function() {
   // Swap out elements
   $(this).replaceWith(dateInput);
 
+  // Enable jquery ui datepicker
+  dateInput.datepicker({
+    minDate: 1,
+    onClose: function() {
+      // When calander is closed, for a "change" event on the 'dateInput'
+      $(this).trigger("change");
+    }
+  });
+
   // Automatically focus on new element
   dateInput.trigger("focus");
 });
 
 // Value of due date was changed
-$(".list-group").on("blur", "input[type='text']", function() {
+$(".list-group").on("change", "input[type='text']", function() {
   // Get current text
   var date = $(this)
     .val()
@@ -184,7 +225,7 @@ $(".list-group").on("blur", "input[type='text']", function() {
     .attr("id")
     .replace("list-", "");
 
-  // Get the task's position in the list of other li elemetns
+  // Get the task's position in the list of other li elements
   var index = $(this)
     .closest(".list-group-item")
     .index();
@@ -202,6 +243,9 @@ var taskSpan = $("<span>")
 $(this).replaceWith(taskSpan);
 });
 
+// Pass task's <li> element into auditTask() to check new due date
+auditTask ($(taskSpan).closest(".list-group-item"));
+
   // The text() method will get the inner text content of the current element, represented by $(this)
   var text = $(this)
   //console.log(text);
@@ -214,6 +258,11 @@ $(this).replaceWith(taskSpan);
 
     $(this).replaceWith(textInput)
     textInput.trigger("focus");
+});
+
+// Date Picker
+$("#modalDueDate").datepicker({
+  minDate: 1
 });
 // New code I have added ends
 
@@ -260,7 +309,6 @@ $("#remove-tasks").on("click", function() {
   saveTasks();
 });
 
-// load tasks for the first time
+// New Code I have added begins
+// Load tasks for the first time
 loadTasks();
-
-
