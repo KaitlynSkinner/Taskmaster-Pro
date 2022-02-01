@@ -60,12 +60,15 @@ var auditTask = function(taskEl) {
     .text()
     .trim();
     // Ensure it worked
-    //console.log(date);
+    console.log(date);
 
     // Convert to moment object at 5:00pm
     var time = moment(date, "L").set("hour", 17);
     // This should print out an object for the value of the date variable, but at 5:00pm of that date
-    //console.log(time);
+    console.log(time);
+
+    // Remove any old classes from element
+    $(taskEl).removeClass("list-group-item-warning list-group-item-danger");
 
     // Apply new class if task is near/over due date
     if (moment().isAfter(time)) {
@@ -149,15 +152,32 @@ $("#trash").droppable({
   }
 });
 
+// Task text was clicked
 $(".list-group").on("click", "p", function() {
   //console.log(this);
+    // The text() method will get the inner text content of the current element, represented by $(this)
+    // Get current text of p element
+    var text = $(this)
+    //console.log(text);
+      .text()
+      .trim();
+  
+      // Replace p element with a new textarea
+      var textInput = $("<textarea>")
+      .addClass("form-control")
+      .val(text);
+      $(this).replaceWith(textInput);
+  
+      // Auto focus new element
+      textInput.trigger("focus");
+});
 
   // <textarea> revert back when it goes out of focus
   $(".list-group").on("blur", "textarea", function() {
     // Get the textarea's current value/text
     var text = $(this)
       .val()
-      .trim();
+      //.trim();
 
     // Get the parent ul's id attribute
     var status = $(this)
@@ -181,7 +201,6 @@ $(".list-group").on("click", "p", function() {
     // Replace textarea with p element
     $(this).replaceWith(taskP);
   }); 
-
 
 // Due date was clicked
 $(".list-group").on("click", "span", function() {
@@ -216,8 +235,8 @@ $(".list-group").on("click", "span", function() {
 $(".list-group").on("change", "input[type='text']", function() {
   // Get current text
   var date = $(this)
-    .val()
-    .trim();
+    .val();
+    //.trim();
 
   // Get parent ul's id attribute
   var status = $(this)
@@ -241,23 +260,8 @@ var taskSpan = $("<span>")
 
 // Replace input with span element
 $(this).replaceWith(taskSpan);
-});
-
 // Pass task's <li> element into auditTask() to check new due date
 auditTask ($(taskSpan).closest(".list-group-item"));
-
-  // The text() method will get the inner text content of the current element, represented by $(this)
-  var text = $(this)
-  //console.log(text);
-    .text()
-    .trim();
-
-    var textInput = $("<textarea>")
-    .addClass("form-control")
-    .val(text);
-
-    $(this).replaceWith(textInput)
-    textInput.trigger("focus");
 });
 
 // Date Picker
