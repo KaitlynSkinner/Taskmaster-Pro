@@ -1,5 +1,6 @@
 var tasks = {};
 
+// Create Tasks
 var createTask = function(taskText, taskDate, taskList) {
   // create elements that make up a task item
   var taskLi = $("<li>").addClass("list-group-item");
@@ -22,6 +23,7 @@ var createTask = function(taskText, taskDate, taskList) {
   $("#list-" + taskList).append(taskLi);
 };
 
+// Load Tasks
 var loadTasks = function() {
   tasks = JSON.parse(localStorage.getItem("tasks"));
 
@@ -45,11 +47,13 @@ var loadTasks = function() {
   });
 };
 
+// Save Tasks
 var saveTasks = function() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
 };
 
-// New code I have added begins 
+// Audit Tasks
+// New code I have added begins (added titles to functions also)
 var auditTask = function(taskEl) {
   // To ensure element is getting to the function
   //console.log(taskEl);
@@ -60,12 +64,12 @@ var auditTask = function(taskEl) {
     .text()
     .trim();
     // Ensure it worked
-    console.log(date);
+    //console.log(date);
 
     // Convert to moment object at 5:00pm
     var time = moment(date, "L").set("hour", 17);
     // This should print out an object for the value of the date variable, but at 5:00pm of that date
-    console.log(time);
+    //console.log(time);
 
     // Remove any old classes from element
     $(taskEl).removeClass("list-group-item-warning list-group-item-danger");
@@ -89,16 +93,22 @@ $(".card .list-group").sortable({
   tolerance: "pointer",
   helper: "clone",
   activate: function(event, ui) {
-    console.log("activate", ui);
+    //console.log("activate", ui);
+    $(this).addClass("dropover");
+    $(".bottom-trash").addClass("bottom-trash-drag");
   },
   deactivate: function(event, ui) {
-    console.log("deactivate", ui);
+    //console.log("deactivate", ui);
+    $(this).removeClass("dropover");
+    $(".bottom-trash").removeClass("bottom-trash-drag");
   },
   over: function(event) {
-    console.log("over", event);
+    //console.log("over", event);
+    $(event.target).addClass("dropover-active");
   },
   out: function(event) {
-    console.log("out", event);
+    //console.log("out", event);
+    $(event.target).removeClass("dropover-active");
   },
   update: function(event) {
     // Array to store the task data in
@@ -131,9 +141,11 @@ $(".card .list-group").sortable({
     tasks[arrName] = tempArr;
     saveTasks();
   },
+  /*
   stop: function(event) {
     $(this).removeClass("dropover");
   }
+  */
 });
 
 // Trash icon can be dragged/dropped onto
@@ -143,12 +155,57 @@ $("#trash").droppable({
   drop: function(event, ui) {
     // Remove dragged element from the dom
     ui.draggable.remove();
+    $(".bottom-trash").removeClass("bottom-trash-active");
   },
   over: function(event, ui) {
     console.log("over", ui);
+    $(".bottom-trash").addClass("bottom-trash-active");
   },
   out: function(event, ui) {
-    console.log("out", ui);
+    //console.log("out", ui);
+    $(".bottom-trash").removeClass("bottom-trash-active");
+  }
+});
+
+// Convert text field into a jQuery date picker
+// Date Picker
+$("#modalDueDate").datepicker({
+  // force user to select a future date
+  minDate: 1
+});
+// New code I have added ends
+
+// modal was triggered
+$("#task-form-modal").on("show.bs.modal", function() {
+  // clear values
+  $("#modalTaskDescription, #modalDueDate").val("");
+});
+
+// modal is fully visible
+$("#task-form-modal").on("shown.bs.modal", function() {
+  // highlight textarea
+  $("#modalTaskDescription").trigger("focus");
+});
+
+// save button in modal was clicked
+$("#task-form-modal .btn-save").click(function() {
+  // get form values
+  var taskText = $("#modalTaskDescription").val();
+  var taskDate = $("#modalDueDate").val();
+
+  if (taskText && taskDate) {
+    createTask(taskText, taskDate, "toDo");
+
+    // close modal
+    $("#task-form-modal").modal("hide");
+
+    // save in tasks array
+    tasks.toDo.push({
+      text: taskText,
+      date: taskDate
+    });
+
+    saveTasks();
   }
 });
 
@@ -264,55 +321,23 @@ $(this).replaceWith(taskSpan);
 auditTask ($(taskSpan).closest(".list-group-item"));
 });
 
-// Date Picker
-$("#modalDueDate").datepicker({
-  minDate: 1
-});
-// New code I have added ends
-
-// modal was triggered
-$("#task-form-modal").on("show.bs.modal", function() {
-  // clear values
-  $("#modalTaskDescription, #modalDueDate").val("");
-});
-
-// modal is fully visible
-$("#task-form-modal").on("shown.bs.modal", function() {
-  // highlight textarea
-  $("#modalTaskDescription").trigger("focus");
-});
-
-// save button in modal was clicked
-$("#task-form-modal .btn-primary").click(function() {
-  // get form values
-  var taskText = $("#modalTaskDescription").val();
-  var taskDate = $("#modalDueDate").val();
-
-  if (taskText && taskDate) {
-    createTask(taskText, taskDate, "toDo");
-
-    // close modal
-    $("#task-form-modal").modal("hide");
-
-    // save in tasks array
-    tasks.toDo.push({
-      text: taskText,
-      date: taskDate
-    });
-
-    saveTasks();
-  }
-});
-
 // remove all tasks
 $("#remove-tasks").on("click", function() {
   for (var key in tasks) {
     tasks[key].length = 0;
     $("#list-" + key).empty();
   }
+  console.log(tasks);
   saveTasks();
 });
 
 // New Code I have added begins
 // Load tasks for the first time
 loadTasks();
+
+// Timer to exeute block of code after 5 seconds
+setInterval(function() {
+  $(".card .list-group-item").each(function() {
+    auditTask($(this));
+  });
+}, 1000 * 60 * 30); //or 1800000 milliseconds
